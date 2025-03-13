@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://hey35ul6ytf0"]
+[gd_scene load_steps=3 format=3 uid="uid://cvg813s55yvr8"]
 
 [ext_resource type="Script" path="res://addons/compute_shader_studio/compute_shader_studio_2d.gd" id="1_6846p"]
 [ext_resource type="Texture2D" uid="uid://demftcowdd5c6" path="res://examples/icon.svg" id="2_s3fct"]
@@ -7,6 +7,8 @@
 
 [node name="ComputeShaderStudio2D2" type="Node" parent="." node_paths=PackedStringArray("data")]
 script = ExtResource("1_6846p")
+WSX = 512
+WSY = 512
 glsl_file = "res://examples/exemple_axel_mathéo/example_1.cpp"
 GLSL_code = "
 // Write your code HERE
@@ -18,9 +20,9 @@ void main() {
 	data_1[p] = 0xFF0000AA;//s + int( 1.0 + 99999.9*sin(float(x+float(step+y))/1000.0));
 }
 "
-data = [NodePath("../Matrix1"), NodePath("")]
+data = [NodePath("../Matrix1"), null]
 
 [node name="Matrix1" type="Sprite2D" parent="."]
 position = Vector2(566, 305)
-scale = Vector2(3.27344, 3.02344)
+scale = Vector2(3, 2.771)
 texture = ExtResource("2_s3fct")
