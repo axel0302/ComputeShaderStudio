@@ -1,66 +1,76 @@
+// TRACE QUE 1 TRAIT PUIS CERCLE BONNE HAUTEUR MAIS PAS BON ENDROIT
 void main() {
     uint x = gl_GlobalInvocationID.x;
     uint y = gl_GlobalInvocationID.y;
     uint p = x + y * WSX; // Position dans le buffer
 
-    // Centre de l'image
+    // Centre initial de l'image
     float centerX = WSX * 0.5;
     float centerY = WSY * 0.5;
 
-    // Parametres du cercle et du trait
-    float radius = min(WSX, WSY) * 0.4; // Rayon du cercle
-    float thickness = 1.5;              // Epaisseur du cercle
-    float stop_percent = 0.9;           // Arret du cercle a 90%
-    float line_percent = 0.1;           // Longueur du trait vers le centre (entre 0 et 1)
+    // Parametres du cercle
+    float initial_radius = min(WSX, WSY) * 0.4; // Rayon de depart
+    float thickness = 1.5;                      // Epaisseur du cercle
+    float stop_percent = 0.9;                   // Arret du cercle a 90%
+    float line_length = 0.15;                   // Longueur du trait vers l'interieur
+    float shrink_factor = 0.85;                 // Reduction du rayon a chaque boucle
 
     // Fond blanc par defaut
     data_0[p] = 0xFFFFFFFF; // Blanc
 
-    // Calcul de la distance au centre
-    float dx = float(x) - centerX;
-    float dy = float(y) - centerY;
-    float distance = sqrt(dx * dx + dy * dy);
+    // Animation : progression du cercle (augmente avec step)
+    float animation_progress = float(step) * 0.02;
 
-    // Calcul de l'angle (entre 0 et 2*PI)
+    // Initialisation des variables
+    float radius = initial_radius;
+    float accumulated_angle = 0.0;
+    float currentCenterX = centerX;
+    float currentCenterY = centerY;
+
+    // Calcul de la position actuelle
+    float dx = float(x) - currentCenterX;
+    float dy = float(y) - currentCenterY;
+    float distance = sqrt(dx * dx + dy * dy);
     float angle = atan(dy, dx);
     if (angle < 0.0) angle += 6.28318530718; // Normaliser entre 0 et 2*PI
 
-    // Animation : progression du cercle (augmente avec step)
-    float animation_progress = mod(float(step) * 0.02, 6.28318530718);
+    // Dessiner les cercles et les traits successifs
+    while (radius > 10.0) { // Arreter quand le cercle devient tres petit
+        float stop_angle = stop_percent * 6.28318530718;
 
-    // Angle d'arret a 90%
-    float stop_angle = stop_percent * 6.28318530718;
-
-    // Dessiner le cercle jusqu'a 90% du tour
-    if (abs(distance - radius) <= thickness && angle <= animation_progress && angle <= stop_angle) {
-        data_0[p] = 0xFF000000; // Noir (trace le cercle)
-    }
-
-    // Dessiner le trait vers le centre a partir de 90%
-    if (animation_progress >= stop_angle) {
-        // Point de depart du trait
-        float stop_x = centerX + radius * cos(stop_angle);
-        float stop_y = centerY + radius * sin(stop_angle);
-
-        // Point d'arret du trait (interpolation vers le centre)
-        float target_x = centerX + (stop_x - centerX) * (1.0 - line_percent);
-        float target_y = centerY + (stop_y - centerY) * (1.0 - line_percent);
-
-        // Verifier si (x, y) est sur la ligne
-        float t = ((float(x) - stop_x) * (target_x - stop_x) +
-                   (float(y) - stop_y) * (target_y - stop_y)) /
-                  ((target_x - stop_x) * (target_x - stop_x) +
-                   (target_y - stop_y) * (target_y - stop_y));
-
-        float line_x = stop_x + t * (target_x - stop_x);
-        float line_y = stop_y + t * (target_y - stop_y);
-
-        float dist_to_line = sqrt((float(x) - line_x) * (float(x) - line_x) +
-                                  (float(y) - line_y) * (float(y) - line_y));
-
-        // Si le point est sur le trait vers le centre
-        if (dist_to_line <= thickness && t >= 0.0 && t <= 1.0) {
-            data_0[p] = 0xFF000000; // Noir (trace le trait)
+        // Dessiner le cercle actuel
+        if (abs(distance - radius) <= thickness && angle <= animation_progress - accumulated_angle && angle <= stop_angle) {
+            data_0[p] = 0xFF000000; // Noir (cercle)
         }
+
+        // Dessiner le trait perpendiculaire (vers l'interieur)
+        if (animation_progress - accumulated_angle >= stop_angle) {
+            float line_progress = min(1.0, (animation_progress - accumulated_angle - stop_angle) / 0.3);
+
+            // Parcourir toute la longueur du trait
+            for (float t = 0.0; t <= line_progress; t += 0.01) {
+                float inner_radius = radius - radius * line_length * t;
+                float inner_x = currentCenterX + inner_radius * cos(stop_angle);
+                float inner_y = currentCenterY + inner_radius * sin(stop_angle);
+
+                float inner_distance = sqrt((float(x) - inner_x) * (float(x) - inner_x) + (float(y) - inner_y) * (float(y) - inner_y));
+
+                if (inner_distance <= thickness) {
+                    data_0[p] = 0xFF000000; // Noir (trait)
+                }
+            }
+        }
+
+        // Calcul de la fin du trait pour le prochain cercle
+        float end_x = currentCenterX + (radius - radius * line_length) * cos(stop_angle);
+        float end_y = currentCenterY + (radius - radius * line_length) * sin(stop_angle);
+
+        // Mise a jour du centre et du rayon pour le prochain cercle
+        currentCenterX = end_x;
+        currentCenterY = end_y;
+        radius *= shrink_factor;
+
+        // Mise a jour de l'angle accumule
+        accumulated_angle += stop_angle + 0.3;
     }
 }
