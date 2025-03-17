@@ -23,6 +23,11 @@ void main() {
 data = [NodePath("../Matrix1"), null]
 
 [node name="Matrix1" type="Sprite2D" parent="."]
+<<<<<<< HEAD
 position = Vector2(566, 305)
 scale = Vector2(3, 2.771)
+=======
+position = Vector2(651, 322)
+scale = Vector2(4.89062, 4.79688)
+>>>>>>> de9e25cb550441c039e5086be0fed27b4cc903e8
 texture = ExtResource("2_s3fct")
